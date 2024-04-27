@@ -13,25 +13,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.post("/api/transcribe")
-def read_root(audio_url: str):
-    try:
-        transcript = transcribe_audio(audio_url)
-        # if not transcript.status == 'completed':
-        #     raise HTTPException(status_code=400, detail="Transcription failed")
-        return {"transcript": transcript.text}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An error occurred during transcription.")
+file_location = ""
 
 @app.post("/upload/")
 async def upload_audio(file: UploadFile = File(...)):
     # //file_location = f"./downloads/{file.filename}"
     print("Uploading in the server......")
     print("file...", file)
-    #file_location = f"./Users/ly/Downloads/{file.filename}"
+    global file_location
     file_location = f"/Users/ly/Documents/Business-Projects/wordwaveapp/downloads/{file.filename}"
-    #with open(file_location, "wb+") as file_object:
     with open(file_location, "wb") as file_object:    
-        #file_object.write(file.file.read())
         file_object.write(await file.read())
     return JSONResponse(status_code=200, content={"message": "File saved successfully"})
+
+@app.post("/api/transcribe")
+async def read_root():
+    global file_location
+    try:
+        transcript = transcribe_audio(file_location)
+        return {"transcript": transcript.text}
+    except Exception as e:
+        print("Error...", e)
+        raise HTTPException(status_code=500, detail="An error occurred during transcription.")
+
